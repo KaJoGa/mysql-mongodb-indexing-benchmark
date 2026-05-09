@@ -150,16 +150,6 @@ Estimated run time scales roughly linearly with `sum(DATASET_SIZES)` × `TRIALS_
 - Trial-target indices are picked by a separate seeded RNG (`seed + 1`) and sorted, so the order is stable across runs
 - `time.perf_counter()` only; ms = `(t_end − t_start) * 1000`
 
-## Authors
-
-- **Kalev Jordan Gamaliel** — kalev.gamaliel@binus.ac.id
-- **Reiki Indrasyahdewa Kierana** — reiki.kierana@binus.ac.id
-
-Computer Science Department, Bina Nusantara University, Indonesia.
-
-Supervised by Dr. Ir. Alexander Agung Santoso Gunawan and
-Rilo Chandra Pradana, S.Si., M.Kom.
-
 ## Troubleshooting
 
 | Symptom | Likely cause / fix |
@@ -171,8 +161,41 @@ Rilo Chandra Pradana, S.Si., M.Kom.
 | Bulk insert seems slow (minutes for 100K) | Confirm InnoDB engine; we use `executemany` in 5K batches, expect ~5–15 s for 100K |
 | Wrong Python interpreter | `.venv\Scripts\python.exe --version` should report 3.12.x; recreate the venv with `py -3.12 -m venv .venv` if not |
 
-## Deviations from the original spec
+## Implementation Notes
 
-- **Quick mode CSV path.** Quick-mode runs write to `output/raw_timings_quick.csv` rather than `output/raw_timings.csv`. This keeps a real full-run dataset safe from accidental overwrite and lets resume logic for the full run stay simple. Both modes can coexist on disk.
-- **Setup scope (confirmed with the user).** Each `(database, dataset_size, indexing)` setup runs all four CRUD ops in sequence (C → R → U → D), rather than dropping/re-inserting per cell. This was explicitly confirmed; it matches the spec's "After Delete: re-insert the removed records before moving to the next operation type" wording. Twelve setups, four ops each, instead of forty-eight independent setups.
-- **`improvement_ratios.csv`.** Not in the original deliverables list, but the heatmap is computed from these and we save them as CSV too so the paper can cite exact numbers without re-deriving them from the figure.
+A few design decisions worth noting for reproducibility:
+
+- **Quick mode writes to a separate CSV.** `--quick` runs output to 
+  `output/raw_timings_quick.csv` rather than `raw_timings.csv`, so test 
+  runs cannot accidentally overwrite a real full-run dataset, and both 
+  modes can coexist on disk.
+
+- **Setup scope.** Each `(database, dataset_size, indexing)` configuration 
+  runs all four CRUD operations sequentially (Create → Read → Update → 
+  Delete), with deleted records re-inserted before moving to the next 
+  operation type. This produces 12 database setups, each running 4 
+  operations × 10 trials, rather than 48 independent setups. Choosing 
+  this scope reduces setup overhead while preserving the per-trial 
+  isolation properties relevant to the measurement (cold-cache target 
+  selection, deterministic trial order, and per-operation state 
+  restoration).
+
+- **Improvement ratios saved as CSV.** In addition to the heatmap figure, 
+  improvement ratios are written to `output/improvement_ratios.csv` so 
+  the paper can cite exact numbers without re-deriving them from the 
+  visualisation.
+
+## Authors
+
+- **Kalev Jordan Gamaliel** — kalev.gamaliel@binus.ac.id
+- **Reiki Indrasyahdewa Kierana** — reiki.kierana@binus.ac.id
+
+Computer Science Department, Bina Nusantara University, Indonesia.
+
+Supervised by Dr. Ir. Alexander Agung Santoso Gunawan and
+Rilo Chandra Pradana, S.Si., M.Kom.
+
+## License
+
+This project is released under the MIT License. See [LICENSE](LICENSE) 
+for details.
