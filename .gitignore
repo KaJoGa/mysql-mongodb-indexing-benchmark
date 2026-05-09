@@ -1,0 +1,22 @@
+# venv
+.venv/
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# AI assistants (local session state and prompts, not part of the project)
+.claude/
+claude_code_benchmark_prompt.md
+
+# environment overrides
+.env
+.env.local
